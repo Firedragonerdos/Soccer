@@ -145,9 +145,9 @@ class CameraSystem:
         # Follow ball along X axis
         target_x = clamp(ball_pos.x, -FIELD_HALF_LENGTH + 10, FIELD_HALF_LENGTH - 10)
 
-        # Slight Z offset based on ball Z position
+        # Strong Z offset following based on ball Z position
         z_offset = -self.broadcast_distance
-        z_factor = ball_pos.z / FIELD_HALF_WIDTH * 5.0
+        z_factor = ball_pos.z / FIELD_HALF_WIDTH * 15.0  # Increased from 5 to 15
         z_offset += z_factor
 
         # Height adjusts slightly based on action
@@ -176,9 +176,10 @@ class CameraSystem:
         self.target_zoom = lerp(CAMERA_DYNAMIC_ZOOM_MIN, CAMERA_DYNAMIC_ZOOM_MAX, zoom_factor)
         self.current_zoom = lerp(self.current_zoom, self.target_zoom, dt * 2)
 
-        # Position
+        # Position with Z following
         target_x = clamp(ball_pos.x * 0.8, -FIELD_HALF_LENGTH + 10, FIELD_HALF_LENGTH - 10)
-        self.target_position = Vec3(target_x, self.current_zoom, -self.current_zoom * 0.8)
+        target_z = ball_pos.z * 0.6  # Follow ball Z more closely
+        self.target_position = Vec3(target_x, self.current_zoom, -self.current_zoom * 0.8 + target_z)
         self.target_look_at = Vec3(ball_pos.x, max(0.5, ball_pos.y * 0.5), ball_pos.z * 0.5)
 
     def _update_end_to_end(self, dt: float, ball_pos: Vec3):

@@ -371,8 +371,8 @@ class GoalkeeperAI:
         """Handle when GK is holding the ball."""
         self.hold_timer += dt
 
-        # Wait a moment then distribute
-        if self.hold_timer > 2.0:
+        # Wait a moment then distribute (must be less than GK_HOLDING lock duration of 1.0s)
+        if self.hold_timer > 0.5:
             # Find best distribution target
             best_target = None
             best_score = -999
@@ -405,7 +405,7 @@ class GoalkeeperAI:
                 self.player.gk_distribute(best_target.position, ball, is_throw)
                 self.hold_timer = 0
                 self.state = 'positioning'
-            elif self.hold_timer > 5.0:
+            elif self.hold_timer > 2.0:
                 # Just boot it upfield
                 target = Vec3(
                     self.side * 30,

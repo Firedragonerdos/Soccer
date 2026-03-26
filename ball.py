@@ -378,6 +378,11 @@ class Ball:
             self.out_of_bounds = True
             self.is_in_play = False
 
+        # Stop ball if out of play
+        if not self.is_in_play:
+            self.velocity = Vec3(0, 0, 0)
+            self.spin = Vec3(0, 0, 0)
+
     def _update_entity(self):
         """Sync Ursina entity with physics state."""
         self.entity.position = self.position
