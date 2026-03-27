@@ -340,20 +340,24 @@ class Player:
 
         dist = vec3_distance_xz(self.position, target_pos)
         if is_lob:
-            power = PASS_LOB_POWER * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.LONG_PASSING))
+            power = PASS_LOB_POWER * 1.15 * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.LONG_PASSING))
             kick_dir = Vec3(direction.x, math.sin(PASS_LOB_ANGLE), direction.z)
         elif is_through:
-            power = PASS_THROUGH_BALL_POWER * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.VISION))
-            kick_dir = Vec3(direction.x, 0.05, direction.z)
+            power = PASS_THROUGH_BALL_POWER * 1.2 * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.VISION))
+            kick_dir = Vec3(direction.x, 0.07, direction.z)
         elif dist > 25:
-            power = PASS_LONG_POWER * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.LONG_PASSING))
-            kick_dir = Vec3(direction.x, 0.1, direction.z)
+            power = PASS_LONG_POWER * 1.18 * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.LONG_PASSING))
+            kick_dir = Vec3(direction.x, 0.13, direction.z)
         elif dist > 12:
-            power = PASS_MEDIUM_POWER * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.SHORT_PASSING))
-            kick_dir = Vec3(direction.x, 0.03, direction.z)
+            power = PASS_MEDIUM_POWER * 1.15 * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.SHORT_PASSING))
+            kick_dir = Vec3(direction.x, 0.04, direction.z)
         else:
-            power = PASS_SHORT_POWER * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.SHORT_PASSING))
-            kick_dir = Vec3(direction.x, 0.01, direction.z)
+            power = PASS_SHORT_POWER * 1.12 * power_ratio * attr_to_multiplier(self.get_attr(PlayerAttribute.SHORT_PASSING))
+            kick_dir = Vec3(direction.x, 0.02, direction.z)
+
+        if not is_lob:
+            # Slight distance-based boost so manual charged passes can reach teammates.
+            power *= 1.0 + clamp((dist - 8.0) / 30.0, 0.0, 0.25)
 
         kick_dir = vec3_normalize(kick_dir)
         spin_attr = self.get_attr(PlayerAttribute.CURVE)

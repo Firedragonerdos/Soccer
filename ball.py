@@ -262,14 +262,15 @@ class Ball:
 
         # Apply friction
         if self.is_on_ground:
-            friction = BALL_ROLL_FRICTION * self.weather_friction_mod
+            base_friction = BALL_ROLL_FRICTION * self.weather_friction_mod
+            friction = base_friction ** max(0.0, dt * 60.0)
             self.velocity = Vec3(
                 self.velocity.x * friction,
                 self.velocity.y,
                 self.velocity.z * friction
             )
         else:
-            air_friction = BALL_FRICTION_AIR
+            air_friction = BALL_FRICTION_AIR ** max(0.0, dt * 60.0)
             self.velocity = Vec3(
                 self.velocity.x * air_friction,
                 self.velocity.y,
