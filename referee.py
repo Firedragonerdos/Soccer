@@ -361,32 +361,24 @@ class Referee:
             # Who touched last?
             last_team = ball.last_touched_team
 
-            if last_team == home_team.team_id:
-                attacking_right = home_team.attacking_direction > 0
-                if (side_x > 0 and attacking_right) or (side_x < 0 and not attacking_right):
-                    # Goal kick for defending team
-                    defending = away_team if side_x == home_team.attacking_direction else home_team
-                    self.current_set_piece = SetPieceType.GOAL_KICK
-                    self.set_piece_team = defending
-                else:
-                    # Corner for attacking team
-                    attacking = home_team
-                    self.current_set_piece = SetPieceType.CORNER_KICK
-                    self.set_piece_team = attacking
-                    if defending:
-                        defending.corners += 0
-                    attacking.corners += 1
+            # Team attacking this goal line (x side) is the one whose attacking
+            # direction points to this side.
+            if home_team.attacking_direction == side_x:
+                attacking_team = home_team
+                defending_team = away_team
             else:
-                attacking_right = away_team.attacking_direction > 0
-                if (side_x > 0 and attacking_right) or (side_x < 0 and not attacking_right):
-                    defending = home_team if side_x == away_team.attacking_direction else away_team
-                    self.current_set_piece = SetPieceType.GOAL_KICK
-                    self.set_piece_team = defending
-                else:
-                    attacking = away_team
-                    self.current_set_piece = SetPieceType.CORNER_KICK
-                    self.set_piece_team = attacking
-                    attacking.corners += 1
+                attacking_team = away_team
+                defending_team = home_team
+
+            # If attackers touched it last -> goal kick. Otherwise -> corner.
+            # Unknown last touch defaults to goal kick to keep play flowing.
+            if last_team is None or last_team == attacking_team.team_id:
+                self.current_set_piece = SetPieceType.GOAL_KICK
+                self.set_piece_team = defending_team
+            else:
+                self.current_set_piece = SetPieceType.CORNER_KICK
+                self.set_piece_team = attacking_team
+                attacking_team.corners += 1
 
             side_z = 1 if ball.position.z > 0 else -1
             if self.current_set_piece == SetPieceType.GOAL_KICK:
