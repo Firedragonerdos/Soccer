@@ -17,6 +17,7 @@ from utils import (
     vec3_dot, vec3_reflect, clamp, probability_check, attr_to_multiplier
 )
 from player import PlayerState
+from config import PlayerAttribute
 
 
 class PhysicsEngine:
@@ -63,10 +64,6 @@ class PhysicsEngine:
                     ))
 
                     # Weight by strength
-                    str1 = p1.get_attr(p1.attributes.get(None, 50)) if False else 70
-                    str2 = p2.get_attr(p2.attributes.get(None, 50)) if False else 70
-
-                    from config import PlayerAttribute
                     str1 = p1.get_attr(PlayerAttribute.STRENGTH)
                     str2 = p2.get_attr(PlayerAttribute.STRENGTH)
 
@@ -221,9 +218,7 @@ class PhysicsEngine:
 
             # Keep ball near player while dribbling
             speed = vec3_length_xz(player.velocity)
-            dribble_attr = player.get_attr(
-                __import__('config', fromlist=['PlayerAttribute']).PlayerAttribute.BALL_CONTROL
-            )
+            dribble_attr = player.get_attr(PlayerAttribute.BALL_CONTROL)
             control = attr_to_multiplier(dribble_attr)
 
             # Touch distance based on speed and control
@@ -289,6 +284,18 @@ class PhysicsEngine:
 
             if event['type'] == 'ball_control':
                 player = event['player']
+
+                if (getattr(ball, 'retouch_block_player_id', None) == player.id and
+                    getattr(ball, 'retouch_block_timer', 0.0) > 0.0):
+                    continue
+
+                # Give passes/shots a brief release window so the kicker doesn't
+                # instantly auto-collect the ball again in the next physics tick.
+                if (ball.last_touched_by == player and
+                        ball.frames_since_touch < 8 and
+                        (ball.pass_active or ball.cross_active or ball.shot_active)):
+                    continue
+
                 # Don't pick up if someone already has it
                 if any(p.has_ball for p in self._get_all_players(match_state)):
                     # Steal from current holder
@@ -296,7 +303,6 @@ class PhysicsEngine:
                                           if p.has_ball), None)
                     if current_holder and current_holder.team_id != player.team_id:
                         # Contested ball
-                        from config import PlayerAttribute
                         control1 = player.get_attr(PlayerAttribute.BALL_CONTROL)
                         control2 = current_holder.get_attr(PlayerAttribute.BALL_CONTROL)
                         if random.random() < control1 / (control1 + control2):
@@ -304,6 +310,8 @@ class PhysicsEngine:
                             player.has_ball = True
                             ball.last_touched_by = player
                             ball.last_touched_team = player.team_id
+                            ball.retouch_block_player_id = None
+                            ball.retouch_block_timer = 0.0
                             ball_claimed = True
                             results.append({
                                 'type': 'ball_won',
@@ -316,6 +324,8 @@ class PhysicsEngine:
                 ball.last_touched_by = player
                 ball.last_touched_team = player.team_id
                 ball.owner = player
+                ball.retouch_block_player_id = None
+                ball.retouch_block_timer = 0.0
                 ball.shot_active = False
                 ball.pass_active = False
                 ball.cross_active = False

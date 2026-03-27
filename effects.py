@@ -87,9 +87,12 @@ class ParticleSystem:
         self.particles = []
         self.weather_particles = []
         self.current_weather = WeatherType.CLEAR
+        self._ball_trail_timer = 0.0
 
     def update(self, dt):
         """Update all active particles."""
+        self._ball_trail_timer += dt
+
         # Update gameplay particles
         alive = []
         for p in self.particles:
@@ -177,6 +180,10 @@ class ParticleSystem:
         """Spawn trail particles behind a fast-moving ball."""
         if ball_speed < 15:
             return
+
+        if self._ball_trail_timer < 0.025:
+            return
+        self._ball_trail_timer = 0.0
 
         intensity = clamp((ball_speed - 15) / 20, 0, 1)
         count = int(intensity * 3) + 1

@@ -67,6 +67,8 @@ class Ball:
         self.cross_active = False
         self.set_piece_ball = False
         self.frames_since_touch = 0
+        self.retouch_block_player_id = None
+        self.retouch_block_timer = 0.0
 
     @property
     def pos(self) -> Vec3:
@@ -115,6 +117,8 @@ class Ball:
         self.cross_active = False
         self.set_piece_ball = False
         self.frames_since_touch = 0
+        self.retouch_block_player_id = None
+        self.retouch_block_timer = 0.0
         self.trail_positions.clear()
         self._update_entity()
 
@@ -147,6 +151,15 @@ class Ball:
         self.cross_active = is_cross
         self.frames_since_touch = 0
 
+        # Prevent instant self-reclaim after kicking.
+        self.retouch_block_player_id = getattr(kicker, 'id', None)
+        if is_pass or is_cross:
+            self.retouch_block_timer = 0.40
+        elif is_shot:
+            self.retouch_block_timer = 0.22
+        else:
+            self.retouch_block_timer = 0.0
+
     def header(self, direction: Vec3, power: float, header_player=None):
         """Apply a header to the ball."""
         self.velocity = Vec3(
@@ -164,6 +177,8 @@ class Ball:
         if header_player:
             self.last_touched_team = getattr(header_player, 'team_id', None)
         self.frames_since_touch = 0
+        self.retouch_block_player_id = getattr(header_player, 'id', None)
+        self.retouch_block_timer = 0.15
 
     def deflect(self, normal: Vec3, speed_retain: float = 0.6):
         """Deflect ball off a surface/player."""
@@ -191,6 +206,8 @@ class Ball:
         self.last_touched_by = holder
         if holder:
             self.last_touched_team = getattr(holder, 'team_id', None)
+        self.retouch_block_player_id = None
+        self.retouch_block_timer = 0.0
 
     def update(self, dt: float):
         """Update ball physics."""
@@ -206,6 +223,11 @@ class Ball:
             return
 
         self.frames_since_touch += 1
+        if self.retouch_block_timer > 0.0:
+            self.retouch_block_timer = max(0.0, self.retouch_block_timer - dt)
+            if self.retouch_block_timer <= 0.0:
+                self.retouch_block_player_id = None
+
         if self.frames_since_touch > 30:
             self.shot_active = False
             self.pass_active = False

@@ -350,6 +350,10 @@ class Match:
             # Place ball
             self.ball.reset(self.referee.set_piece_position)
 
+            # Keep human control on the closest eligible taker at restarts.
+            if sp_team and sp_team.is_human:
+                sp_team.select_nearest_to_ball(self.ball)
+
             # Update players moving to position
             self.home_team.update(dt, self.ball, self.away_team, self)
             self.away_team.update(dt, self.ball, self.home_team, self)

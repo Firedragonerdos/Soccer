@@ -156,7 +156,8 @@ class PlayerController:
         elif self.is_charging_pass:
             # Release pass
             self.is_charging_pass = False
-            power = min(1.0, self.charge_timer / 1.0)
+            # Slightly stronger charge curve so medium/long presses produce useful pass distance.
+            power = clamp(0.35 + self.charge_timer / 0.8, 0.45, 1.0)
 
             # Find best pass target
             from utils import get_best_pass_target
@@ -165,7 +166,7 @@ class PlayerController:
             if target:
                 from utils import calculate_pass_target
                 target_pos = calculate_pass_target(
-                    player.position, target.position, target.velocity, 15.0
+                    player.position, target.position, target.velocity, 20.0
                 )
                 player.initiate_pass(target_pos, ball, power)
             else:
@@ -359,7 +360,8 @@ class PlayerController:
                             player.initiate_cross(target.position, ball, 0.7)
                         else:
                             player.initiate_pass(target.position, ball, 0.6)
-                    return True
+                        return True
+                    return False
 
             elif sp_type in [SetPieceType.THROW_IN, SetPieceType.GOAL_KICK]:
                 if held_keys['space']:
@@ -368,6 +370,16 @@ class PlayerController:
                     target = get_best_pass_target(player, self.team.players, opponents, ball.position)
                     if target:
                         player.initiate_pass(target.position, ball, 0.5)
+                        return True
+
+                    # Fallback so throw-ins/goal-kicks are always taken.
+                    atk_dir = self.team.attacking_direction
+                    fallback = Vec3(
+                        ball.position.x + atk_dir * 8,
+                        0,
+                        clamp(ball.position.z * 0.6, -FIELD_HALF_WIDTH + 2, FIELD_HALF_WIDTH - 2)
+                    )
+                    player.initiate_pass(fallback, ball, 0.45)
                     return True
 
         return False

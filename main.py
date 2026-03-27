@@ -452,7 +452,7 @@ if __name__ == '__main__':
         title=WINDOW_TITLE,
         borderless=False,
         fullscreen=WINDOW_FULLSCREEN,
-        development_mode=True,
+        development_mode=False,
     )
     window.color = color.black
     mouse.visible = True

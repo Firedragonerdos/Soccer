@@ -145,9 +145,9 @@ class CameraSystem:
         # Follow ball along X axis
         target_x = clamp(ball_pos.x, -FIELD_HALF_LENGTH + 10, FIELD_HALF_LENGTH - 10)
 
-        # Direct Z position following - camera stays behind field but follows ball Z
-        z_offset = -self.broadcast_distance + ball_pos.z * 0.5  # Follow ball Z with 50% influence
-        z_offset = clamp(z_offset, -self.broadcast_distance - 20, -self.broadcast_distance + 20)
+        # Follow Z more conservatively and keep a safe distance from touchline extremes.
+        z_follow = clamp(ball_pos.z * 0.35, -FIELD_HALF_WIDTH * 0.55, FIELD_HALF_WIDTH * 0.55)
+        z_offset = -self.broadcast_distance + z_follow
 
         # Height adjusts slightly based on action
         height = self.broadcast_height
@@ -158,7 +158,7 @@ class CameraSystem:
         self.target_look_at = Vec3(
             ball_pos.x,
             max(0.5, ball_pos.y * 0.5),
-            ball_pos.z  # Look directly at ball Z without clamping
+            clamp(ball_pos.z, -FIELD_HALF_WIDTH + 1.5, FIELD_HALF_WIDTH - 1.5)
         )
 
     def _update_dynamic(self, dt: float, ball_pos: Vec3, ball_vel: Vec3 = None):
